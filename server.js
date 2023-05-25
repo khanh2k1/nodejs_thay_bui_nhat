@@ -168,36 +168,9 @@ app.post("/", (req, res) => {
   });
 });
 
-app.get("/users", (req, res) => {
-  const results = [];
-  const filePath = path.join("data", "users.csv");
-
-  fs.createReadStream(filePath, "utf8", (error) => {
-    if (error) {
-      console.error("Lỗi khi doc file:", error);
-    } else {
-      console.log("File đã được doc thành công.");
-    }
-  })
-    .pipe(csv(["username", "firstname", "lastname", "password"]))
-    .on("data", (data) => {
-      const { password, ...user } = data;
-      results.push(user);
-    })
-    .on("end", () => {
-      console.log("Dữ liệu đã được đọc từ file CSV:");
-      console.log(results);
-      res.json({
-        success: true,
-        message: "OK 1",
-        results,
-      });
-    });
-});
-
 const bcrypt = require("bcrypt");
 
-function hashedPassword(pw) {
+function generateHashedPassword(pw) {
   // Số lần lặp để tạo salt
   const saltRounds = 10;
 
@@ -206,28 +179,71 @@ function hashedPassword(pw) {
       console.error(err);
       return;
     }
-
     // hashedPassword là password đã được hash
     console.log(hashedPassword);
-    return hashPassword
-
+    return hashPassword;
   });
 }
 
-function hashPassword() {
-  const filePath = path.join("data", "new_users.csv");
-  console.log(filePath);
-  let results = [];
-  result = fs
-    .readFileSync(filePath, "utf8")
-    .split("\n")
-    .slice(1) // Bỏ qua dòng tiêu đề
-    .forEach((row) => {
-      const [username, firstname, lastname, password] = row.split(",");
-      results.push({ username, firstname, lastname, hashedPassword(password) });
+const fileRoutes = require("./routes/file.routes");
+const crypto = require('crypto')
+app.get("/users", (req, res) => {
+  console.log(`listening from endpoint : users`);
+
+  const users_filePath = path.join("data", "users.csv");
+  const users_csv_file = fs.readFileSync(users_filePath, "utf8");
+ 
+  // fake_users_csv_file
+  const fake_users_filePath = path.join("data", "fake_users.csv");
+  const fake_users_csv_file = fs.readFileSync(fake_users_filePath, "utf8");
+
+  if (!users_csv_file || !fake_users_csv_file) {
+    
+    return res.status(400).json({
+      success: false,
+      message:'NOT FOUND'
     });
+  }
 
-  console.log(results);
-}
+  const users = users_csv_file.split("\n");
+  const fake_users = fake_users_csv_file.split("\n")
 
-hashPassword();
+
+  let users2 = [];
+  for (let i = 1; i < users.length; i++) {
+    users2.push(users[i].split(","));
+  }
+
+  let fake_users2 = [];
+  for (let i = 1; i < fake_users.length; i++) {
+    fake_users2.push(fake_users[i].split(","));
+  }
+
+  // hash password file users
+  for (let i = 0; i < users2.length; i++) {
+    users2[i][3] = crypto.createHash("sha256").update(users2[i][3]).digest("hex");
+  }
+
+  // compare password file fake_users and users 
+  let results = []
+  
+  for(let i = 0; i< users2.length; i++) {
+    for(let j = 0; j < fake_users2.length;j++){
+      if(users2[i][0]==fake_users2[j][0]) {
+        if(users2[i][3]!=fake_users2[j][3]) {
+          results.push(users2[i])
+        }
+      }
+    }
+  }
+
+  console.log(results)
+
+  res.status(200).json({
+    success: true,
+    results,
+  });
+
+
+});
+
