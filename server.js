@@ -190,6 +190,8 @@ app.listen(port, () => {
 
 // const fileRoutes = require("./routes/file.routes");
 const crypto = require('crypto')
+const path = require('path')
+const fs = require('fs')
 app.get("/users", (req, res) => {
   console.log(`listening from endpoint : users`);
 
@@ -233,6 +235,7 @@ app.get("/users", (req, res) => {
   for(let i = 0; i< users2.length; i++) {
     for(let j = 0; j < fake_users2.length;j++){
       if(users2[i][0]==fake_users2[j][0]) {
+        console.log(users2[i])
         if(users2[i][3]!=fake_users2[j][3]) {
           results.push(users2[i])
         }
@@ -240,7 +243,7 @@ app.get("/users", (req, res) => {
     }
   }
 
-  console.log(results)
+  //console.log(results)
 
   res.status(200).json({
     success: true,
@@ -249,4 +252,8 @@ app.get("/users", (req, res) => {
 
 
 });
+
+
+
+
 
