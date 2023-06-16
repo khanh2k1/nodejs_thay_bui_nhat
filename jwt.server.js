@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const connect = require('./src/database/connect')
 const env = require('./src/config/env')
 const authRoutes = require('./src/routes/auth.routes')
+require('dotenv').config()
 //middlewares
 app.use(morgan("dev"));
 
