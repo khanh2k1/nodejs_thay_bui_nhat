@@ -10,15 +10,15 @@ const authController = {
   register: async (req, res) => {
     // check username duplicated
 
-    const {email, password} = req.body;
+    const {email, username, password} = req.body;
 
-    let isExistedUser = await userModel.findOne({email});
+    let isExistedUser = await userModel.findOne({username});
 
     if (isExistedUser) {
       // conflict : 409
-      return res.status(409).json({
+      return res.status(401).json({
         success: false,
-        message: "cant create user",
+        message: "Unauthorized"
       });
     }
 
@@ -27,11 +27,12 @@ const authController = {
     // khong co "new" thi se khong co method save
     const newUser = new userModel({
         password: hashedPassword,
-        email
+        email,
+        username
     })
     console.log(newUser)
 
-    await new newUser.save().then((data)=>{
+    await newUser.save().then((data)=>{
         res.status(201).json({
             success:true,
             message: "register successuly" ,
@@ -46,9 +47,9 @@ const authController = {
   },
 
   login: async (req, res) => {
-    let {email, password} = req.body
+    let {username, password} = req.body
     
-    const isExistedUser = await userModel.findOne({email})
+    const isExistedUser = await userModel.findOne({username})
 
     if(!isExistedUser) {
         console.log('invalid user')
@@ -61,9 +62,10 @@ const authController = {
     const isMatch = bcryptjs.compareSync(password, isExistedUser.password)
 
 
-    console.log(isMatch)
+    console.log('isValidPassword=',isMatch)
 
     if(!isMatch) {
+        console.log('wrong password')
         return res.status(401).json({
             success:false,
             message: "Unauthorized"
@@ -74,15 +76,15 @@ const authController = {
     const token = jwt.sign({
         id : isExistedUser._id,
         email : isExistedUser.email
-    }, env.SECRECT_KEY, {expiresIn : '1d'})
+    }, env.SECRECT_KEY, {expiresIn : env.EXPIRES_IN})
 
     console.log(token)
 
     res.json({
         success:true,
-        message:"authorized successfully"
+        message:"authorized successfully",
+        token
     })
-
   },
 
   changePassword: async (req, res) => {},

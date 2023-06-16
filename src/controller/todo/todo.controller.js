@@ -1,27 +1,39 @@
 const Todo = require("../../models/Todo");
-
+const jwt = require('jsonwebtoken')
+const env = require('../../config/env')
 const todoController = {
   create: async (req, res) => {
-    const content = await req.body;
-    console.log(content);
-    const newTodo = new Todo(content);
-    const isSaved = await newTodo.save()
+    const { content } = await req.body;
+    const headerToken = req.headers.authorization
 
-    console.log(isSaved)
-    if(isSaved) {
-      return res.json({
-        success:true,
-        message:'create a new todo succesfully'
+    if(!headerToken || !headerToken.startWiths('Bearer')) {
+      return res.status(401).json({
+        success:false,
+        message:'Invalid token'
       })
-    
     }
 
-    res.status(422).json({
-      success:false,
-      message:'error create a new todo'
-    })
-      
+    const token = headerToken.split(' ')[1]
+
+    const user = jwt.verify(token, env.SECRECT_KEY)
+    console.log(token)
+    console.log(user)
+    if(!token) {
+
+    }
+
+    // if(isSaved) {
+    //   return res.json({
+    //     success:true,
+    //     message:'create a new todo succesfully'
+    //   })
+    // }
+    // res.status(422).json({
+    //   success:false,
+    //   message:'error create a new todo'
+    // })
   },
+
 
   getTodos: async (req, res) => {
     const todos = await Todo.find();

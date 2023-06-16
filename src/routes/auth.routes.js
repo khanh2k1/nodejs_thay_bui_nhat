@@ -6,11 +6,11 @@ const authSchema = require('../validations/auth.schema')
 
 
 router.post('/register',
- validator.bodyValidator(authSchema.register), 
+ validator(authSchema.register), 
  authController.register)
 
-router.post('/login', validator.bodyValidator(authSchema.login), authController.login)
+router.post('/login', validator(authSchema.login, "body"), authController.login)
 
-router.patch('/change-password', authController.changePassword)
+router.patch('/change-password', validator(authSchema.login, "body"), authController.changePassword)
 
 module.exports = router
