@@ -17,7 +17,6 @@ app.use(bodyParser.json());
 app.use('/', authRoutes)
 
 
-
 const port = env.PORT
 const server = app.listen(port, ()=>{
     console.log('listening port', port)
