@@ -11,8 +11,7 @@ const validator = (schema, property) => {
       // has error
       //console.log(error)
       const { message, path } = error["details"][0]
-      const error1 = error['details']
-      console.log(error1)
+      
       console.log(JSON.stringify({ message, path }, null, 2));
       res.status(422).json({
         success: false,

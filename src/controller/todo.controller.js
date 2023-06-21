@@ -2,9 +2,12 @@ const Todo = require("../models/Todo");
 const jwt = require('jsonwebtoken')
 const env = require('../config/env')
 const todoController = {
+
   create: async (req, res) => {
     const { content } = await req.body;
-    const newTodo = new Todo({content})
+    const userId = req.user.id
+    console.log('user=>',req.user)
+    const newTodo = new Todo({content, userId})
     await newTodo.save().then(()=>{
       console.log('create a new todo successfully')
       return res.json({
@@ -16,23 +19,42 @@ const todoController = {
 
 
   getTodos: async (req, res) => {
-    const todos = await Todo.find();
-    return res.json({
+    const todos = await Todo.find()
+    if(!todos) {
+      return res.status(500).json({
+        success:false,
+        message:'err get todos' 
+      })
+    }
+
+    res.json({
       success: true,
-      todos,
+      todos
+      
     });
   },
 
   // findById : if success, it will console.log version before it update success
   update: async (req, res) => {
-    const { id, content } = req.body;
-    const isUpdated = await Todo.findByIdAndUpdate(
+    const { content } = req.body;
+    const { id } = req.params
+    await Todo.findByIdAndUpdate(
       id,
       { content: content },
       { new: true }
-    );
-
-    console.log(isUpdated);
+    ).then(()=>{
+      console.log("updated successfully")
+      res.json({
+        success:true,
+        message:"updated successfully"
+      })
+    }).catch(err=>{
+      console.log(err)
+      res.json({
+        success:true,
+        message:"updated failure"
+      })
+    })
   },
 
   delete: async(req, res) => {

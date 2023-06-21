@@ -87,7 +87,10 @@ const authController = {
     })
   },
 
-  changePassword: async (req, res) => {},
+  changePassword: async (req, res) => {
+    const { oldPass, newPass } = req.body
+    const isValid = bcryptjs.compareSync(oldPass)
+  },
 };
 
 module.exports = authController;

@@ -17,9 +17,6 @@ const fileUtils = {
                 return data
             }
         })
-
-        
-      
     },
 
     write : (filePath, data) => {
