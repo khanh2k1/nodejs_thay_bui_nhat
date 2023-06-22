@@ -7,7 +7,7 @@ const user = new mongoose.Schema({
     username: {
         type:String,
         required: true,
-        unique: true
+        unique: true,
     },
     refreshToken: String,
     password: String

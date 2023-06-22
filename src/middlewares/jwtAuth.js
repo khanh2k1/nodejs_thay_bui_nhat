@@ -23,9 +23,9 @@ const jwtAuth = {
         const user = jwt.verify(token, env.SECRECT_KEY)
 
         if(!user) {
-          return res.status(404).json({
+          return res.status(401).json({
             success:false,
-            message:"user not found"
+            message:"unauthorized"
           })
         }
 

@@ -5,9 +5,9 @@ const todoController = {
 
   create: async (req, res) => {
     const { content } = await req.body;
-    const userId = req.user.id
+    const createdBy = req.user.id
     console.log('user=>',req.user)
-    const newTodo = new Todo({content, userId})
+    const newTodo = new Todo({content, createdBy})
     await newTodo.save().then(()=>{
       console.log('create a new todo successfully')
       return res.json({
@@ -16,17 +16,14 @@ const todoController = {
       })
     })
   },
-
-
   getTodos: async (req, res) => {
-    const todos = await Todo.find()
+    const todos = await Todo.find().populate('createdBy', 'username')
     if(!todos) {
       return res.status(500).json({
         success:false,
         message:'err get todos' 
       })
     }
-
     res.json({
       success: true,
       todos
@@ -34,6 +31,7 @@ const todoController = {
     });
   },
 
+  
   // findById : if success, it will console.log version before it update success
   update: async (req, res) => {
     const { content } = req.body;
@@ -63,9 +61,8 @@ const todoController = {
     res.json({
       success:false,
       message:"deleletd successfully"
-    })
+    }) 
   }
-
 };
 
 module.exports = todoController;

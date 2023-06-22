@@ -1,14 +1,11 @@
-const object = {
-    body : {
-        content: {
-            work : "Lau nha",
-            isCompleted: false
-        }
-    }
+const body = {
+    email: {
+        type:"email",
+        value:"Khanh@gmail.com"
+    },
+    password: "khanh"
 }
 
-
-const { content } = object.body
-const content2 = object.body.content
-console.log(content)
-console.log(content2)
+const { email, password } = body
+const email2 = body['email']
+console.log(typeof email, typeof email2)
