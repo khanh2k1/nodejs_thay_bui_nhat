@@ -15,7 +15,7 @@ const authController = {
     let isExistedUser = await userModel.findOne({ username });
 
     if (isExistedUser) {
-      // conflict : 409
+      // conflict : 409, 400
       return res.status(401).json({
         success: false,
         message: "Unauthorized"

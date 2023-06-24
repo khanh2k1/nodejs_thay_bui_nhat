@@ -1,13 +1,20 @@
 const express = require('express')
 const todoController = require('../controller/todo.controller')
-const todoSchema = require('../validations/todoSchema')
+const todoSchema = require('../validations/todo.schema')
 const validator = require('../middlewares/validator')
 const jwtAuth = require('../middlewares/jwtAuth')
 const router = express.Router()
 
-router.post('/', jwtAuth.isAuth, validator(todoSchema.create), todoController.create)
+router.post('/',
+    validator(todoSchema.create),
+    jwtAuth.isAuth,
+    todoController.create)
+    
+router.get('/', jwtAuth.isAuth, todoController.getTodos)
 
-router.get('/', todoController.getTodos)
+router.get('/email/', jwtAuth.isAuth, todoController.getTodosByEmail)
+
+router.get('/:id', validator(todoSchema.isObjectId, 'params'), todoController.getTodoById)
 
 router.patch('/:id',
     validator(todoSchema.isObjectId, "params"),

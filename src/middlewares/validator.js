@@ -13,6 +13,7 @@ const validator = (schema, property) => {
       const { message, path } = error["details"][0]
       
       console.log(JSON.stringify({ message, path }, null, 2));
+      // status-code : 422 => validation
       res.status(422).json({
         success: false,
         message: {

@@ -4,7 +4,7 @@ const content = joi.string().required().min(3)
 const todoSchema = {
     create: joi.object({
         content: content,
-        createdBy: joi.objectId()
+        userId: joi.objectId()
     }),
     
     update: joi.object({
