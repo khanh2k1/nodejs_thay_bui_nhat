@@ -1,102 +1,86 @@
 const Todo = require("../models/todo.model");
-const jwt = require('jsonwebtoken')
-const env = require('../config/env')
+const asyncMiddleware = require('../middlewares/asyncMiddleware')
+const { ErrorResponse } = require('../response/errorResponse')
+const { ReturnSuccessResponse } = require('../response/successResponse')
 const todoController = {
 
-  create: async (req, res) => {
+  create: asyncMiddleware(async (req, res, next) => {
+
     const { content } = await req.body;
     const { id: userId, email } = req.user
-    console.log('user=>',req.user)
-    const newTodo = new Todo({content, userId, email})
-    await newTodo.save().then(()=>{
-      console.log('create a new todo successfully')
-      return res.json({
-        success:true,
-        message:"create successfully"
-      })
-    })
-  },
+    console.log('user=>', req.user)
+    const newTodo = new Todo({ content, userId, email })
+    const isSuccess = await newTodo.save()
+
+    if (!isSuccess) throw new ErrorResponse(500, 'Internal error')
+
+    ReturnSuccessResponse(res, 201, newTodo, 'Create todo successfully')
+
+  }),
 
 
-  getTodos: async (req, res) => {
+  getTodos: asyncMiddleware(async (req, res, next) => {
+
     const { id: userId } = req.user
+    const todos = await Todo.find({ userId }).populate('userId', '-password')
+    ReturnSuccessResponse(res, 200, todos, 'Get todos successfully')
 
-    const todos = await Todo.find({userId}).populate('userId','-password')
-    if(!todos) {
-      return res.status(500).json({
-        success:false,
-        message:'err get todos'  
-      })
+  }),
+
+  getTodosByEmail: asyncMiddleware(async (req, res, next) => {
+    try {
+      const { email } = req.user
+      console.log(req.user)
+      const todos = await Todo.find().populate('userEmail', '-password')
+
+      res.json({
+        success: true,
+        todos
+      });
+    } catch (error) {
+      next(error)
     }
-    res.json({
-      success: true,
-      todos
-    });
-  },
+  }),
 
-  getTodosByEmail: async (req, res) => {
-    const { email } = req.user
-    console.log(req.user)
-    const todos = await Todo.find().populate('userEmail','-password')
-    if(!todos) {
-      return res.status(500).json({
-        success:false,
-        message:'err get todos'  
-      })
-    }
-    res.json({
-      success: true,
-      todos
-    });
-  },
-
-  getTodoById: async (req, res) => {
+  getTodoById: asyncMiddleware(async (req, res, next) => {
     const { id } = req.params
     const todo = await Todo.findById(id)
-    if(!todo) {
-      return res.status(404).json({
-        success:false,
-        message:"not found"
-      })
-    }
-    res.json({
-      success:true,
-      message:todo
-    })
 
-  },
-  
+    if (!todo) throw new ErrorResponse('404', 'Not found')
+
+    res.json({
+      success: true,
+      message: todo
+    })
+  }),
+
   // findById : if success, it will console.log version before it update success
-  update: async (req, res) => {
+  update: asyncMiddleware(async (req, res, next) => {
+
     const { content } = req.body;
     const { id } = req.params
-    await Todo.findByIdAndUpdate(
+    const isUpdatedTodo = await Todo.findByIdAndUpdate(
       id,
       { content: content },
       { new: true }
-    ).then(()=>{
-      console.log("updated successfully")
-      res.json({
-        success:true,
-        message:"updated successfully"
-      })
-    }).catch(err=>{
-      console.log(err)
-      res.json({
-        success:true,
-        message:"updated failure"
-      })
-    })
-  },
+    )
 
-  delete: async (req, res) => {
-    const { id } = req.params
-    await Todo.findByIdAndDelete(id)
-    res.json({
-      success:false,
-      message:"deleletd successfully"
-    }) 
-  }
+    if (!isUpdatedTodo) throw new ErrorResponse(500, 'Internal error')
+
+    ReturnSuccessResponse(res, 200, isUpdatedTodo, 'Update todo successfully')
+  }),
+
+  delete: asyncMiddleware(async (req, res) => {
+
+    const { id: _id } = req.params
+    const { id: userId } = req.user
+
+    const isDeleted = await Todo.findOneAndDelete({_id, userId})
+
+    // if(!isDeleted) throw new ErrorResponse(500, 'Internal error')
+    ReturnSuccessResponse(res, 200, isDeleted, 'Delete todo successfully')
+
+  }),
 };
 
 module.exports = todoController;

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const env = require('../config/env')
+const env = require('../../config/env')
 
 
 const MONGO_URI = env.MONGO_URI

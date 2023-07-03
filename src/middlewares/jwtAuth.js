@@ -1,7 +1,8 @@
 const env = require('../config/env')
 const jwt = require('jsonwebtoken')
+const userModel = require('../models/user.model')
 const jwtAuth = {
-    isAuth : (req, res, next) => {
+    isAuth : async (req, res, next) => {
         const headerToken = req.headers.authorization
 
         if(!headerToken || !headerToken.startsWith('Bearer')) {
@@ -19,17 +20,20 @@ const jwtAuth = {
                 message:"invalid token"
             })
         }
+        
         // decode jwt
         const user = jwt.verify(token, env.SECRECT_KEY)
 
-        if(!user) {
+        const isExistedUser = await userModel.findById(user.id)
+
+        if(!isExistedUser) {
           return res.status(401).json({
             success:false,
             message:"unauthorized"
           })
         }
 
-        req.user = user
+        req.user = isExistedUser
         next()
     },
 }

@@ -21,6 +21,6 @@ router.patch('/:id',
     validator(todoSchema.update, "body"),
     todoController.update)
 
-router.delete('/:id', validator(todoSchema.isObjectId, "params"), todoController.delete)
+router.delete('/:id', validator(todoSchema.isObjectId, "params"), jwtAuth.isAuth, todoController.delete)
 
 module.exports = router

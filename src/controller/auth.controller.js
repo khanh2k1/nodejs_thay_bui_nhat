@@ -2,26 +2,22 @@ const userModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
 const jwt = require('jsonwebtoken')
 const env = require('../config/env')
-
+const asyncMiddleware = require('../middlewares/asyncMiddleware')
+const { ErrorResponse } = require('../response/errorResponse')
+const { ReturnSuccessResponse } = require('../response/successResponse')
 const salt = bcryptjs.genSaltSync(10);
 
 
 const authController = {
-  register: async (req, res) => {
+  register: asyncMiddleware(async (req, res) => {
     // check username duplicated
-
     const { email, username, password } = req.body;
-
     let isExistedUser = await userModel.findOne({ username });
 
-    if (isExistedUser) {
-      // conflict : 409, 400
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized"
-      });
-    } 
+    // duplicate or conflict : 409, 400
+    if (isExistedUser) return new ErrorMiddleware('Unauthorized', 409)
 
+    // hash password
     let hashedPassword = bcryptjs.hashSync(password, salt);
 
     // khong co "new" thi se khong co method save
@@ -30,8 +26,8 @@ const authController = {
       email,
       username
     })
-    console.log(newUser)
 
+    // save to db
     await newUser.save().then((data) => {
       res.status(201).json({
         success: true,
@@ -39,67 +35,58 @@ const authController = {
         email: newUser.email
       })
     }).catch(err => {
-      res.status(500).json({
-        success: false,
-        message: "error login", err
-      })
+      throw new ErrorResponse(500, 'Internal error')
     })
-  },
+  }),
 
-  login: async (req, res) => {
+  login: asyncMiddleware(async (req, res, next) => {
     const { email, password } = await req.body
-    
-    await userModel.findOne({email}).then((user) => {
-      console.log(password)
-      const isMatch = bcryptjs.compareSync(password, user.password)
 
-      console.log('isValidPassword=', isMatch)
+    const isExistedUser = await userModel.findOne({ email })
 
-      if (!isMatch) {
-        console.log('wrong password')
-        return res.status(401).json({
-          success: false,
-          message: "Unauthorized"
-        })
-      }
+    if (!isExistedUser) throw new ErrorResponse(401, 'Unauthorized')
 
-      // create jwt
-      const token = jwt.sign({
-        id: user._id,
-        email: user.email
-      }, env.SECRECT_KEY, { expiresIn: env.EXPIRES_IN })
+    const isMatch = bcryptjs.compareSync(password, isExistedUser.password)
 
-      console.log(token)
+    if (!isMatch) {
+      console.log('pw is match:', isMatch)
+      throw new ErrorResponse(401, 'Unauthorized')
+    }
 
-      res.json({
-        success: true,
-        message: "authorized successfully",
-        token
-      })
+    // create jwt
+    const token = jwt.sign({
+      id: isExistedUser._id,
+      email: isExistedUser.email
+    }, env.SECRECT_KEY, { expiresIn: env.EXPIRES_IN })
 
-    }).catch(error=>{
-      console.log('invalid user', error)
-      // status-code: 401 : unauthorization 
-      res.status(401).json({
-        success: false,
-        message: "Unauthorized", error
-      })
-    }) 
+    //console.log(token)
 
+    console.log('type of res:', typeof res.status)
 
-   
+    // res.json({
+    //   success: true,
+    //   message: "authorized successfully",
+    //   token
+    // })
+    ReturnSuccessResponse(res, null, { token }, 'authorized successfully')
 
+  }),
 
-
-
-
-
-  },
-
-  changePassword: async (req, res) => {
+  changePassword: asyncMiddleware(async (req, res) => {
     const { oldPass, newPass } = req.body
-    const isValid = bcryptjs.compareSync(oldPass)
-  },
+    console.log('oldPass:', oldPass, 'newPass:', newPass)
+    console.log(req.user)
+    const isValid = bcryptjs.compareSync(oldPass, req.user.password)
+    console.log('isValid:', isValid)
+
+    if (!isValid) throw new ErrorResponse(401, 'Unauthorized')
+
+    const hashedPassword = bcryptjs.hashSync(newPass, salt)
+
+    await userModel.findByIdAndUpdate(req.user.id, { password: hashedPassword })
+
+    ReturnSuccessResponse(res, null, null, 'change password successfully')
+  }),
 };
 
 module.exports = authController;
